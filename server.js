@@ -1,5 +1,11 @@
 import dotenv from 'dotenv';
 import { existsSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get current directory for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load .env.local if it exists, otherwise load .env
 if (existsSync('.env.local')) {
@@ -7,6 +13,7 @@ if (existsSync('.env.local')) {
 } else {
     dotenv.config();
 }
+
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
 import cors from 'cors';
@@ -21,6 +28,7 @@ if (!process.env.GEMINI_API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+// Your existing API route
 app.post('/api/generateContent', async (req, res) => {
     try {
         console.log('=== API Request Received ===');
@@ -59,6 +67,20 @@ app.post('/api/generateContent', async (req, res) => {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
         res.status(500).json({ error: 'Failed to generate content from Gemini API', details: errorMessage });
     }
+});
+
+// NEW: Serve static files from the dist directory (built frontend)
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// NEW: Catch all handler - send back React's index.html file for any non-API routes
+// This pattern works better with Express 5.x
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist/index.html'));
+});
+
+// Handle all other routes that don't start with /api
+app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist/index.html'));
 });
 
 const port = process.env.PORT || 3001;
