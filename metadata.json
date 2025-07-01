@@ -1,0 +1,8 @@
+{
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "name": "TrailTalk - Khmer",
+  "description": "Learning Khmer through basic words and translations",
+  "prompt": ""
+}
