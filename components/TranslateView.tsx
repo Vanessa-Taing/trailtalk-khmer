@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { WordPair } from '../types';
 import { AdSense } from './AdSense';
@@ -57,9 +58,9 @@ export const TranslateView: React.FC<TranslateViewProps> = ({ onClose, vocabular
 
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef<string>('');
-  const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
   const listeningLangRef = useRef<ListenLanguage | null>(null);
   const silenceTimerRef = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     listeningLangRef.current = listeningLang;
@@ -190,6 +191,10 @@ Please provide only the translated text. Do not add any explanations, apologies,
       if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current);
       }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
     };
   }, [handleTranslate, stopListening]);
 
@@ -215,37 +220,54 @@ Please provide only the translated text. Do not add any explanations, apologies,
   };
 
   const handleSpeakTranslation = useCallback((text: string) => {
+    // Universal stop logic
+    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+    }
+    
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      if (audioPlaybackRef.current) audioPlaybackRef.current.pause();
       setIsSpeaking(false);
       return;
     }
-
-    window.speechSynthesis.cancel();
-    if (audioPlaybackRef.current) audioPlaybackRef.current.pause();
     
     const isKhmer = /[\u1780-\u17FF]/.test(text);
     const lang = isKhmer ? 'km' : 'en';
 
     setIsSpeaking(true);
 
-    const encodedText = encodeURIComponent(text);
-    const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodedText}`;
-    
-    const audio = audioPlaybackRef.current || new Audio();
-    audioPlaybackRef.current = audio;
+    if (lang === 'en') {
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voice = voices.find(v => v.lang.startsWith('en-'));
+        if (voice) utterance.voice = voice;
+        else utterance.lang = 'en-US';
+        utterance.rate = 1.0;
+        
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => { setIsSpeaking(false); setError("Failed to play audio."); };
 
-    if (audio.src !== audioUrl) {
-        audio.src = audioUrl;
+        window.speechSynthesis.speak(utterance);
+    } else { // lang === 'km'
+        const encodedText = encodeURIComponent(text);
+        const audioUrl = `/api/tts?lang=km&text=${encodedText}`;
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        
+        const onEnd = () => {
+            setIsSpeaking(false);
+            audioRef.current = null;
+        };
+
+        audio.addEventListener('ended', onEnd);
+        audio.addEventListener('error', () => {
+            setError("Failed to play audio.");
+            onEnd();
+        });
+        
+        audio.play().catch(() => onEnd());
     }
-
-    audio.playbackRate = 1.0; // Normal speed
-    audio.play().catch(() => { setIsSpeaking(false); setError("Audio playback failed.")});
-    audio.onended = () => setIsSpeaking(false);
-    audio.onerror = () => { setIsSpeaking(false); setError("Failed to play audio."); };
-
-  }, [isSpeaking]);
+  }, [isSpeaking, voices]);
 
   useEffect(() => {
     if (translatedText && !isTranslating) {

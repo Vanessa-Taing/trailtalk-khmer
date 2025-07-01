@@ -69,6 +69,40 @@ app.post('/api/generateContent', async (req, res) => {
     }
 });
 
+// NEW: TTS endpoint for Khmer text-to-speech
+app.get('/api/tts', async (req, res) => {
+    const { text, lang } = req.query;
+
+    if (!text || !lang) {
+        return res.status(400).send('Missing text or lang query parameter.');
+    }
+    
+    // This proxy is specifically for Khmer to ensure playback where client-side voices are missing.
+    if (lang !== 'km') {
+        return res.status(400).send('This proxy only supports Khmer (km).');
+    }
+
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(text)}`;
+
+    try {
+        const googleResponse = await fetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+
+        if (!googleResponse.ok || !googleResponse.body) {
+            throw new Error(`Google TTS service failed with status ${googleResponse.status}`);
+        }
+
+        res.setHeader('Content-Type', 'audio/mpeg');
+        const audioBuffer = await googleResponse.arrayBuffer();
+        res.send(Buffer.from(audioBuffer));
+
+    } catch (error) {
+        console.error('TTS proxy error:', error);
+        res.status(500).send('Failed to fetch TTS audio.');
+    }
+});
+
 // NEW: Serve static files from the dist directory (built frontend)
 app.use(express.static(path.join(__dirname, 'dist')));
 

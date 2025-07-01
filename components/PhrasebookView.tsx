@@ -1,5 +1,4 @@
 
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { ALL_PHRASES } from '../constants';
 import { PhrasePair } from '../types';
@@ -23,46 +22,69 @@ interface PhrasebookViewProps {
 
 export const PhrasebookView: React.FC<PhrasebookViewProps> = ({ onClose, voices }) => {
   const [speakingPhrase, setSpeakingPhrase] = useState<{ id: number; lang: 'en' | 'km' } | null>(null);
-  const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
-      if (audioPlaybackRef.current) {
-        audioPlaybackRef.current.pause();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
     };
   }, []);
 
   const handleSpeak = useCallback((phrase: PhrasePair, lang: 'en' | 'km') => {
+    // Universal stop logic
+    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+    }
+    
     if (speakingPhrase?.id === phrase.id && speakingPhrase?.lang === lang) {
-      window.speechSynthesis.cancel();
-      if (audioPlaybackRef.current) audioPlaybackRef.current.pause();
       setSpeakingPhrase(null);
       return;
     }
 
-    window.speechSynthesis.cancel();
-    if (audioPlaybackRef.current) audioPlaybackRef.current.pause();
-    
     setSpeakingPhrase({ id: phrase.id, lang });
     const text = lang === 'en' ? phrase.english : phrase.khmer;
 
-    const encodedText = encodeURIComponent(text);
-    const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodedText}`;
-    
-    const audio = audioPlaybackRef.current || new Audio();
-    audioPlaybackRef.current = audio;
+    if (lang === 'en') {
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voice = voices.find(v => v.lang.startsWith('en-'));
+        if (voice) utterance.voice = voice;
+        else utterance.lang = 'en-US';
+        utterance.rate = 1.0;
+        utterance.onend = () => setSpeakingPhrase(null);
+        utterance.onerror = () => {
+            console.error("Speech synthesis error for phrase:", text);
+            setSpeakingPhrase(null);
+        };
+        window.speechSynthesis.speak(utterance);
+    } else { // lang === 'km'
+        const encodedText = encodeURIComponent(text);
+        const audioUrl = `/api/tts?lang=km&text=${encodedText}`;
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
 
-    if (audio.src !== audioUrl) {
-      audio.src = audioUrl;
+        const onEnd = () => {
+            setSpeakingPhrase(null);
+            audioRef.current = null;
+        };
+
+        audio.addEventListener('ended', onEnd);
+        audio.addEventListener('error', () => {
+            console.error("Error playing Khmer phrase audio from proxy.");
+            onEnd();
+        });
+
+        audio.play().catch(() => {
+            console.error("Khmer audio playback error.");
+            onEnd();
+        });
     }
-
-    audio.playbackRate = 1.0; // Normal speed
-    audio.play().catch(() => setSpeakingPhrase(null));
-    audio.onended = () => setSpeakingPhrase(null);
-    audio.onerror = () => setSpeakingPhrase(null);
-  }, [speakingPhrase]);
+  }, [speakingPhrase, voices]);
 
   const phrasesByCategory = ALL_PHRASES.reduce((acc, phrase) => {
     const { category } = phrase;

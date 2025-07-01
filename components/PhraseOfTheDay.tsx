@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ALL_PHRASES } from '../constants';
 import { PhrasePair } from '../types';
@@ -21,8 +22,9 @@ const SpeakerIcon: React.FC<{ isSpeaking: boolean, className?: string }> = ({ is
 export const PhraseOfTheDay: React.FC = () => {
     const [phrase, setPhrase] = useState<PhrasePair | null>(null);
     const [isSpeaking, setIsSpeaking] = useState(false);
-    const audioEnRef = useRef<HTMLAudioElement | null>(null);
-    const audioKmRef = useRef<HTMLAudioElement | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const isSpeakingRef = useRef(isSpeaking);
+    isSpeakingRef.current = isSpeaking;
 
     useEffect(() => {
         const randomPhrase = ALL_PHRASES[Math.floor(Math.random() * ALL_PHRASES.length)];
@@ -32,52 +34,63 @@ export const PhraseOfTheDay: React.FC = () => {
     const handleSpeak = useCallback(() => {
         if (!phrase) return;
 
+        // Universal cancel
+        window.speechSynthesis.cancel();
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+        }
+
         if (isSpeaking) {
-            if (audioEnRef.current) audioEnRef.current.pause();
-            if (audioKmRef.current) audioKmRef.current.pause();
             setIsSpeaking(false);
             return;
         }
 
         setIsSpeaking(true);
 
-        const enAudio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(phrase.english)}`);
-        audioEnRef.current = enAudio;
-        
-        const kmAudio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=km&client=tw-ob&q=${encodeURIComponent(phrase.khmer)}`);
-        audioKmRef.current = kmAudio;
+        const playKhmer = () => {
+            if (!isSpeakingRef.current) { // Check if user cancelled during the pause
+                 setIsSpeaking(false);
+                 return;
+            }
+            const encodedText = encodeURIComponent(phrase.khmer);
+            const audioUrl = `/api/tts?lang=km&text=${encodedText}`;
+            const audio = new Audio(audioUrl);
+            audioRef.current = audio;
 
-        const errorHandler = () => {
-            setIsSpeaking(false);
-            console.error("Failed to play audio for Phrase of the Moment.");
+            const onEnd = () => {
+                setIsSpeaking(false);
+                audioRef.current = null;
+            };
+            audio.addEventListener('ended', onEnd);
+            audio.addEventListener('error', onEnd);
+            
+            audio.play().catch(onEnd);
         };
-        
-        enAudio.onerror = errorHandler;
-        kmAudio.onerror = errorHandler;
 
-        enAudio.onended = () => {
-            setTimeout(() => {
-                kmAudio.play().catch(errorHandler);
-            }, 300); // Small pause between languages
+        const enUtterance = new SpeechSynthesisUtterance(phrase.english);
+        enUtterance.lang = 'en-US';
+        enUtterance.rate = 1.0;
+        
+        enUtterance.onend = () => {
+            setTimeout(playKhmer, 300);
         };
         
-        kmAudio.onended = () => {
+        enUtterance.onerror = (event) => {
+            console.error("Phrase of the Day TTS Error:", event);
             setIsSpeaking(false);
         };
         
-        enAudio.play().catch(errorHandler);
+        window.speechSynthesis.speak(enUtterance);
 
     }, [phrase, isSpeaking]);
 
     useEffect(() => {
+        // Cleanup function to stop any speech synthesis when the component unmounts
         return () => {
-            if (audioEnRef.current) {
-                audioEnRef.current.pause();
-                audioEnRef.current = null;
-            }
-            if (audioKmRef.current) {
-                audioKmRef.current.pause();
-                audioKmRef.current = null;
+            window.speechSynthesis.cancel();
+            if (audioRef.current) {
+                audioRef.current.pause();
             }
         };
     }, []);

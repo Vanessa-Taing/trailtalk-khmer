@@ -65,7 +65,6 @@ const WalkingPersonIcon: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 type View = 'home' | 'learn' | 'vocab' | 'dict' | 'translate' | 'capture' | 'learnt_words' | 'profile' | 'admin';
-const PRELOAD_COUNT = 9;
 
 const shuffleArray = (array: WordPair[]) => {
   const newArray = [...array];
@@ -95,7 +94,6 @@ const App: React.FC = () => {
   const [currentWords, setCurrentWords] = useState<WordPair[]>([]);
   const [alreadyLearntWords, setAlreadyLearntWords] = useState<WordPair[]>([]);
   const [correctlyPronounced, setCorrectlyPronounced] = useState<CorrectStatus>({});
-  const [audioCache, setAudioCache] = useState<Map<string, HTMLAudioElement>>(new Map());
   
   // --- Voice Loading ---
   useEffect(() => {
@@ -232,34 +230,6 @@ const App: React.FC = () => {
     }
   }, [correctlyPronounced, currentWords]);
 
-  const preloadAudioForWords = useCallback((words: WordPair[]) => {
-    const newCache = new Map<string, HTMLAudioElement>();
-    
-    const createPreloadedAudio = (text: string, lang: 'en' | 'km'): HTMLAudioElement | null => {
-        if (!text) return null;
-        try {
-            const encodedText = encodeURIComponent(text);
-            const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodedText}`;
-            const audio = new Audio(url);
-            audio.preload = 'auto';
-            return audio;
-        } catch (e) {
-            console.error(`Failed to create audio for ${text}`, e);
-            return null;
-        }
-    };
-    
-    words.slice(0, PRELOAD_COUNT).forEach(word => {
-        const enAudio = createPreloadedAudio(word.english, 'en');
-        if (enAudio) newCache.set(`${word.id}-en`, enAudio);
-
-        const kmAudio = createPreloadedAudio(word.khmer, 'km');
-        if (kmAudio) newCache.set(`${word.id}-km`, kmAudio);
-    });
-
-    setAudioCache(newCache);
-  }, []);
-
   const fetchNextBatch = useCallback(() => {
     let bank = [...wordBank];
     if (bank.length < 9) {
@@ -269,7 +239,6 @@ const App: React.FC = () => {
         if (availableWords.length === 0) {
             setCurrentWords([]);
             setWordBank([]);
-            setAudioCache(new Map()); // Clear cache when done
             return;
         }
         bank = shuffleArray(availableWords);
@@ -280,8 +249,7 @@ const App: React.FC = () => {
 
     setCurrentWords(nextCurrentWords);
     setWordBank(nextBank);
-    preloadAudioForWords(nextCurrentWords);
-  }, [wordBank, alreadyLearntWords, currentWords, preloadAudioForWords]);
+  }, [wordBank, alreadyLearntWords, currentWords]);
   
   useEffect(() => {
     if (view === 'vocab' && currentWords.length === 0 && !isCelebrating) {
@@ -350,7 +318,6 @@ const App: React.FC = () => {
                   correctlyPronounced={correctlyPronounced}
                   onPronunciationResult={handlePronunciationResult}
                   voices={voices}
-                  audioCache={audioCache}
                   isCelebrating={isCelebrating}
                   onCelebrationEnd={() => setIsCelebrating(false)}
                />;

@@ -9,7 +9,6 @@ interface WordCardProps {
   voices: SpeechSynthesisVoice[];
   isStandalone?: boolean;
   highlightManual?: boolean;
-  audioCache?: Map<string, HTMLAudioElement>;
 }
 
 // --- Icons ---
@@ -29,14 +28,14 @@ const CheckmarkIcon: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 
-export const WordCard: React.FC<WordCardProps> = ({ wordPair, correctStatus, onPronunciationResult, isStandalone = false, voices, highlightManual = false, audioCache }) => {
+export const WordCard: React.FC<WordCardProps> = ({ wordPair, correctStatus, onPronunciationResult, isStandalone = false, voices, highlightManual = false }) => {
   const [isSpeaking, setIsSpeaking] = useState<string | null>(null);
   const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording'>('idle');
   const [recordingLang, setRecordingLang] = useState<'en' | 'km' | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   
-  const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
   const recognitionRef = useRef<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -48,7 +47,10 @@ export const WordCard: React.FC<WordCardProps> = ({ wordPair, correctStatus, onP
 
     return () => {
       window.speechSynthesis.cancel();
-      if (audioPlaybackRef.current) audioPlaybackRef.current.pause();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
       if (recognitionRef.current) recognitionRef.current.abort();
     };
   }, []);
@@ -68,7 +70,6 @@ export const WordCard: React.FC<WordCardProps> = ({ wordPair, correctStatus, onP
     if (!recognition || recordingStatus !== 'idle') return;
 
     window.speechSynthesis.cancel();
-    if(audioPlaybackRef.current) audioPlaybackRef.current.pause();
     setIsSpeaking(null);
 
     const targetWord = lang === 'en' ? wordPair.english : wordPair.khmer;
@@ -106,60 +107,64 @@ export const WordCard: React.FC<WordCardProps> = ({ wordPair, correctStatus, onP
   };
 
   const handleSpeak = useCallback((word: string, lang: 'en' | 'km') => {
-    const cacheKey = `${wordPair.id}-${lang}`;
-
+    // Universal stop logic
+    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    
     if (isSpeaking === lang) {
-        window.speechSynthesis.cancel();
-        if (audioPlaybackRef.current) audioPlaybackRef.current.pause();
-        setIsSpeaking(null);
-        return;
+      setIsSpeaking(null);
+      return;
     }
 
-    window.speechSynthesis.cancel();
-    if (audioPlaybackRef.current) audioPlaybackRef.current.pause();
-    
     setIsSpeaking(lang);
 
-    const playAudio = (audio: HTMLAudioElement) => {
-        audioPlaybackRef.current = audio;
-        let playCount = 0;
-        const playRepeatedly = () => {
-            if (playCount < 3) {
-                playCount++;
-                audio.currentTime = 0;
-                audio.play().catch(() => {
-                    setIsSpeaking(null);
-                    if (playCount === 1) alert(`Could not play ${lang} audio.`);
-                });
-            } else {
-                setIsSpeaking(null);
-                audio.onended = null;
+    if (lang === 'en') {
+        const utterance = new SpeechSynthesisUtterance(word);
+        const voice = voices.find(v => v.lang.startsWith('en-') || v.lang.startsWith('en_'));
+        if (voice) {
+            utterance.voice = voice;
+        } else {
+            utterance.lang = 'en-US';
+        }
+        utterance.rate = 1.0;
+        utterance.onend = () => setIsSpeaking(null);
+        utterance.onerror = (event) => {
+            console.error('SpeechSynthesis Error:', event);
+            setIsSpeaking(null);
+            if (isStandalone) {
+                alert(`Could not play audio. Your browser might not support English TTS.`);
             }
         };
-
-        audio.onended = playRepeatedly;
-        audio.onerror = () => {
-            setIsSpeaking(null);
-            audio.onended = null;
-            if (isStandalone) alert(`Could not play audio. Please check your connection.`);
-        };
-        playRepeatedly();
-    };
-    
-    const playbackRate = lang === 'en' ? 1.0 : 0.85;
-
-    if (audioCache?.has(cacheKey)) {
-        const cachedAudio = audioCache.get(cacheKey)!;
-        cachedAudio.playbackRate = playbackRate;
-        playAudio(cachedAudio);
-    } else {
+        window.speechSynthesis.speak(utterance);
+    } else { // lang === 'km'
         const encodedWord = encodeURIComponent(word);
-        const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodedWord}`;
-        const newAudio = new Audio(audioUrl);
-        newAudio.playbackRate = playbackRate;
-        playAudio(newAudio);
+        const audioUrl = `/api/tts?lang=km&text=${encodedWord}`;
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        
+        const onEnd = () => {
+            setIsSpeaking(null);
+            audioRef.current = null;
+        };
+
+        audio.addEventListener('ended', onEnd);
+        audio.addEventListener('error', () => {
+            console.error("Error playing Khmer audio from proxy.");
+            onEnd();
+            if (isStandalone) {
+              alert(`Could not play Khmer audio. Please check your internet connection and server status.`);
+            }
+        });
+
+        audio.play().catch(() => {
+            console.error("Khmer audio playback error.");
+            onEnd();
+        });
     }
-  }, [isSpeaking, wordPair.id, audioCache, isStandalone]);
+  }, [isSpeaking, voices, isStandalone]);
 
 
   const getFeedbackClass = () => {

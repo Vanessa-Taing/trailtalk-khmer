@@ -1,5 +1,6 @@
 
 
+
 import React, { useEffect, useState } from 'react';
 import { WordPair, CorrectStatus, PronunciationMethod } from '../types';
 import { WordCard } from './WordCard';
@@ -17,7 +18,7 @@ const CompletionCelebration: React.FC<{ onCelebrationEnd: () => void }> = ({ onC
     const fireworkColors = ['#ff5722', '#ffc107', '#4caf50', '#2196f3', '#9c27b0', '#e91e63'];
 
     useEffect(() => {
-        const sound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVhvT18AAAAAAAAAAAAAAAAAAAA+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz..=");
+        const sound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVhvT18AAAAAAAAAAAAAAAAAAAA+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pj8+Pz4/Pj8+Pj8+Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pj8+Pj8+Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pj8+Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pj8+Pz4/Pj8+Pj8+Pj8+Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pj8+Pz4/Pj8+Pj8+Pj8+Pj8+Pj8+Pj8+Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pj8+Pj8+Pj8+Pj8+Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz4/Pj8+Pz..=");
         try {
             sound.play();
         } catch (e) {
@@ -62,7 +63,6 @@ interface VocabularyViewProps {
   correctlyPronounced: CorrectStatus;
   onPronunciationResult: (wordId: number, lang: 'en' | 'km', method: PronunciationMethod) => void;
   voices: SpeechSynthesisVoice[];
-  audioCache: Map<string, HTMLAudioElement>;
   isCelebrating: boolean;
   onCelebrationEnd: () => void;
 }
@@ -75,7 +75,6 @@ export const VocabularyView: React.FC<VocabularyViewProps> = ({
   correctlyPronounced,
   onPronunciationResult,
   voices,
-  audioCache,
   isCelebrating,
   onCelebrationEnd
 }) => {
@@ -135,7 +134,6 @@ export const VocabularyView: React.FC<VocabularyViewProps> = ({
                             correctStatus={correctlyPronounced[word.id] || { en: false, km: false }}
                             onPronunciationResult={onPronunciationResult}
                             voices={voices}
-                            audioCache={audioCache}
                           />
                         ))}
                   </div>

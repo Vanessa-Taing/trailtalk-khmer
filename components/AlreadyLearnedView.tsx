@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { WordPair, CorrectStatus, PronunciationMethod } from '../types';
 import { WordCard } from './WordCard';
@@ -70,8 +68,8 @@ export const AlreadyLearnedView: React.FC<AlreadyLearnedViewProps> = ({
   const [isSpeaking, setIsSpeaking] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState<string | null>(null);
   
-  const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
   const recognitionRef = useRef<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const filteredLearnedWords = learntWords.filter(word => 
     word.english.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -157,45 +155,68 @@ export const AlreadyLearnedView: React.FC<AlreadyLearnedViewProps> = ({
 
     return () => {
       window.speechSynthesis.cancel();
-      if (audioPlaybackRef.current) audioPlaybackRef.current.pause();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
       if (recognitionRef.current) recognitionRef.current.abort();
     };
   }, []);
 
   // --- Phrase Audio/Speech Handlers ---
   const handleSpeakPhrase = useCallback((text: string, lang: 'en' | 'km') => {
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      if (audioPlaybackRef.current) {
-        audioPlaybackRef.current.pause();
-      }
-      setIsSpeaking(null);
-      return;
+    // Universal stop logic
+    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
     }
 
-    window.speechSynthesis.cancel();
+    if (isSpeaking === lang) {
+        setIsSpeaking(null);
+        return;
+    }
+    
     setIsSpeaking(lang);
 
-    const encodedText = encodeURIComponent(text);
-    const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodedText}`;
-    
-    const audio = audioPlaybackRef.current || new Audio();
-    audioPlaybackRef.current = audio;
+    if (lang === 'en') {
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voice = voices.find(v => v.lang.startsWith('en-'));
+        if (voice) utterance.voice = voice;
+        else utterance.lang = 'en-US';
+        utterance.rate = 1.0;
+        
+        utterance.onend = () => setIsSpeaking(null);
+        utterance.onerror = () => {
+            setIsSpeaking(null);
+            alert(`Could not play audio for the phrase.`);
+        };
+        
+        window.speechSynthesis.speak(utterance);
+    } else { // lang === 'km'
+        const encodedText = encodeURIComponent(text);
+        const audioUrl = `/api/tts?lang=km&text=${encodedText}`;
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
 
-    if (audio.src !== audioUrl) {
-      audio.src = audioUrl;
+        const onEnd = () => {
+            setIsSpeaking(null);
+            audioRef.current = null;
+        };
+
+        audio.addEventListener('ended', onEnd);
+        audio.addEventListener('error', () => {
+            console.error("Error playing Khmer phrase audio from proxy.");
+            onEnd();
+            alert(`Could not play Khmer audio for the phrase.`);
+        });
+
+        audio.play().catch(() => {
+            console.error("Khmer audio playback error.");
+            onEnd();
+        });
     }
-    
-    audio.playbackRate = 1.0; // Normal speed for phrases
-    audio.play().catch(() => {
-        setIsSpeaking(null);
-        alert(`Could not play audio for the phrase.`);
-    });
-    
-    audio.onended = () => setIsSpeaking(null);
-    audio.onerror = () => setIsSpeaking(null);
-
-  }, [isSpeaking]);
+  }, [isSpeaking, voices]);
 
   const startRecordingPhrase = (lang: 'en' | 'km') => {
     const recognition = recognitionRef.current;
@@ -293,8 +314,8 @@ export const AlreadyLearnedView: React.FC<AlreadyLearnedViewProps> = ({
                               <span className="text-lg text-gray-800">{currentPhrase.english}</span>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
-                              <button onClick={() => handleSpeakPhrase(currentPhrase.english, 'en')} disabled={isRecording !== null} className={`p-2 rounded-full ${isSpeaking==='en' ? 'bg-orange-100' : 'hover:bg-gray-100'}`}><SpeakerIcon isSpeaking={isSpeaking === 'en'} /></button>
-                              <button onClick={() => isRecording === 'en' ? stopRecordingPhrase() : startRecordingPhrase('en')} disabled={isRecording !== null && isRecording !== 'en'} className={`p-2 rounded-full ${isRecording==='en' ? 'bg-red-100 animate-pulse' : 'hover:bg-gray-100'}`}>{isRecording==='en' ? <StopIcon/> : <RecordIcon/>}</button>
+                              <button onClick={() => handleSpeakPhrase(currentPhrase.english, 'en')} disabled={isRecording !== null} className={`p-2 rounded-full ${isSpeaking==='en' ? 'bg-orange-100 text-orange-600' : 'text-gray-400 hover:bg-gray-100'} `}><SpeakerIcon isSpeaking={isSpeaking === 'en'} /></button>
+                              <button onClick={() => isRecording === 'en' ? stopRecordingPhrase() : startRecordingPhrase('en')} disabled={isRecording !== null && isRecording !== 'en'} className={`p-2 rounded-full ${isRecording==='en' ? 'bg-red-100 animate-pulse' : 'text-gray-400 hover:bg-gray-100'}`}>{isRecording==='en' ? <StopIcon/> : <RecordIcon/>}</button>
                           </div>
                       </div>
                       {/* Khmer Phrase */}
@@ -304,8 +325,8 @@ export const AlreadyLearnedView: React.FC<AlreadyLearnedViewProps> = ({
                               <span className="text-lg text-gray-800" lang="km">{currentPhrase.khmer}</span>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
-                              <button onClick={() => handleSpeakPhrase(currentPhrase.khmer, 'km')} disabled={isRecording !== null} className={`p-2 rounded-full ${isSpeaking==='km' ? 'bg-orange-100' : 'hover:bg-gray-100'}`}><SpeakerIcon isSpeaking={isSpeaking === 'km'} /></button>
-                              <button onClick={() => isRecording === 'km' ? stopRecordingPhrase() : startRecordingPhrase('km')} disabled={isRecording !== null && isRecording !== 'km'} className={`p-2 rounded-full ${isRecording==='km' ? 'bg-red-100 animate-pulse' : 'hover:bg-gray-100'}`}>{isRecording==='km' ? <StopIcon/> : <RecordIcon/>}</button>
+                              <button onClick={() => handleSpeakPhrase(currentPhrase.khmer, 'km')} disabled={isRecording !== null} className={`p-2 rounded-full ${isSpeaking==='km' ? 'bg-orange-100 text-orange-600' : 'text-gray-400 hover:bg-gray-100'}`}><SpeakerIcon isSpeaking={isSpeaking === 'km'} /></button>
+                              <button onClick={() => isRecording === 'km' ? stopRecordingPhrase() : startRecordingPhrase('km')} disabled={isRecording !== null && isRecording !== 'km'} className={`p-2 rounded-full ${isRecording==='km' ? 'bg-red-100 animate-pulse' : 'text-gray-400 hover:bg-gray-100'}`}>{isRecording==='km' ? <StopIcon/> : <RecordIcon/>}</button>
                           </div>
                       </div>
                     </div>
