@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LingoTrek</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-primary': '#F97316', // orange-500
+              'brand-secondary': '#FB923C', // orange-400
+              'brand-accent': '#FBBF24', // amber-400
+              'brand-dark': '#1E293B', // slate-800
+              'brand-darker': '#0F172A', // slate-900
+              'brand-light': '#F1F5F9', // slate-100
+              'brand-muted': '#94A3B8', // slate-400
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-in-out',
+              'firework': 'firework 1.2s ease-out forwards',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: 0, transform: 'translateY(10px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' },
+              },
+               firework: {
+                '0%': { transform: 'scale(0)', opacity: 1 },
+                '100%': { transform: 'scale(2)', opacity: 0 },
+              }
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.7.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.6.3"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-brand-darker text-brand-light">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
